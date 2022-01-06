@@ -1,4 +1,5 @@
-;---------------------------------------------------
+;---------------------------------------------------------------------------------------------
+;
 ; Programa:Escrever uma rotina para somar ou para multiplicar
 ;          dois números de 8 bits em complemento a dois,
 ;          cujos endereços são passados como parâmetros na pilha.
@@ -8,26 +9,25 @@
 ;          e retorna a informação se houve overflow.
 ;          Indique claramente as opções escolhidas para o parâmetro passado e
 ;          retornado no acumulador, além da ordem dos parâmetros na pilha.
-;---------------------------------------------------
+;
+; Falta:
+; - tratar números cujo resultado é maior do que 16 bits
+; - resultado deve ser devolvido no endereço de uma variável de 16 bits também passada na pilha
+; - retornar a informação se houve overflow
+; - jeito inteligente para a multiplicação
+;
+;---------------------------------------------------------------------------------------------
 
 ORG 0
-    ; Armazena a parte baixa do endereço de NUM1 na pilha
+    ; Armazena o endereço de NUM1 na pilha
     LDA PTR
     PUSH
 
-    ; Armazena a parte alta do endereço de NUM1 na pilha
+    ; Armazena o endereço de NUM2 na pilha
     ADD #1
     PUSH
 
-    ; Armazena a parte baixa do endereço de NUM2 na pilha
-    ADD #1
-    PUSH
-
-    ; Armazena a parte alta do endereço de NUM2 na pilha
-    ADD #1
-    PUSH
-
-    ; Armazena o decisor na pilha
+    ; Armazena o endereço de DECISOR na pilha
     LDA PTR_DECISOR
     PUSH
 
@@ -39,55 +39,66 @@ ORG 0
 ROTINA:
        ; Salva o valor de retorno da rotina
        POP
-       STA ROTINA_RET2
+       STA ROTINA_RET
 
-       POP
-       STA ROTINA_RET1
-
-       ; Salva a parte alta de NUM2 em VAR2
-       POP
-       STA PTR_AUX
-       LDA @PTR_AUX
-       STA VAR2 + 1
-
-       ; Salva a parte baixa de Y em VAR2
+       ; Salva NUM2 em VAR2
        POP
        STA PTR_AUX
        LDA @PTR_AUX
        STA VAR2
 
-       ; Salva a parte alta de NUM2 em VAR1
-       POP
-       STA PTR_AUX
-       LDA @PTR_AUX
-       STA VAR1 + 1
-
-       ; Salva a parte baixa de NUM2 em VAR1
+       ; Salva NUM1 em VAR1
        POP
        STA PTR_AUX
        LDA @PTR_AUX
        STA VAR1
 
-       ; Salva o decisor em VAR_DECISOR
+       ; Salva DECISOR em VAR_DECISOR
        POP
        STA PTR_AUX
        LDA @PTR_AUX
        STA VAR_DECISOR
 
-       ; Se DECISOR != 0 vai para SOMA
-       LDA DECISOR
-       SUB #1
-       JNZ SOMA
+       JMP TESTES
 
        ; Coloca os endereços de retorno para serem utilizados no final
-       LDA ROTINA_RET1
+       LDA ROTINA_RET
        PUSH
 
-       LDA ROTINA_RET2
-       PUSH
+
+TESTES:
+       ; Se der 0, VAR1 é positivo
+       LDA VAR1
+       AND #128
+       JNZ NEGATIVO
+
+       ; Se der 0, VAR2 é positivo
+       LDA VAR2
+       AND #128
+       JNZ NEGATIVO
+
+
+NEGATIVO:
+         ; Se der 0, VAR2 é positivo
+         LDA VAR1
+         AND #128
+         STA VAR1
+
+         ; Se der 0, VAR2 é positivo
+         LDA VAR2
+         AND #128
+         STA VAR2
+
+         ; Se DECISOR != 0 vai para SOMA
+         LDA DECISOR
+         SUB #1
+         JNZ SOMA
 
 
 MULTIPLICA:
+           LDA PTR_SOMARESULT
+           PUSH
+
            ; Se o multiplicador está zerado retorna
            LDA NUM1
            OR NUM1 + 1
@@ -124,28 +135,32 @@ SOMA:
      LDA SOMARESULT
      ADD NUM1
      STA SOMARESULT
+
      LDA SOMARESULT
      ADD NUM2
      STA SOMARESULT
 
+     HLT
 
-; Retorna para o PC onde a rotina foi chamada
+
+; Retona para o PC onde a rotina foi chamada
 RETORNA:
-        RET
+        HLT
+
 
 
 ; |================================================|
 ; | Declaração das variáveis do programa principal |
 ; |================================================|
-ORG 100
+ORG 100h
 
 ; Números a serem calculados (intervalo de -128 a 255)
-NUM1: DW -48
-NUM2: DW -52
+NUM1: DW -4
+NUM2: DW 3
 
 ; Decide se o cálculo efetuado será soma (0) ou multiplicação (1)
-;DECISOR: DW 0
-DECISOR: DW 1
+DECISOR: DW 0
+;DECISOR: DW 1
 
 ; Ponteiro para armazenar o endereço dos números
 PTR: DW NUM1
@@ -159,16 +174,28 @@ VAR_DECISOR: DW 0
 ; Ponteiro auxiliar
 PTR_AUX: DS 1
 
-; Variáveis para armazenar o SP
-ROTINA_RET1: DS 1
-ROTINA_RET2: DS 1
+; Variável para armazenar o SP
+ROTINA_RET: DS 2
 
 ; Variáveis auxiliares para realizar a soma
-SOMARESULT: DS 2
+SOMARESULT: DS 3
 
 ; Variáveis auxiliares para realizar a multiplicação
-MULTRESULT: DS 3
-MULTCOUNTER: DS 3
+MULTRESULT: DS 4
+MULTCOUNTER: DS 4
+
+; Ponteiro para armazenar o endereço dos resultados
+PTR_SOMARESULT: DW SOMARESULT
+PTR_MULTRESULT: DW MULTRESULT
+
+
+
+
+
+
+
+
+
 
 
 
