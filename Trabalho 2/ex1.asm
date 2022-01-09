@@ -10,15 +10,13 @@
 ;          Indique claramente as opções escolhidas para o parâmetro passado e
 ;          retornado no acumulador, além da ordem dos parâmetros na pilha.
 ;
-; Falta:
-; - tratar números cujo resultado é maior do que 16 bits
-; - resultado deve ser devolvido no endereço de uma variável de 16 bits também passada na pilha
-; - retornar a informação se houve overflow
-; - jeito inteligente para a multiplicação
-;
 ;---------------------------------------------------------------------------------------------
 
 ORG 0
+
+    ; Limpa o banner
+    OUT 3
+
     ; Armazena o endereço de NUM1 na pilha
     LDA PTR
     PUSH
@@ -96,9 +94,6 @@ NEGATIVO:
 
 
 MULTIPLICA:
-           LDA PTR_SOMARESULT
-           PUSH
-
            ; Se o multiplicador está zerado retorna
            LDA NUM1
            OR NUM1 + 1
@@ -128,6 +123,8 @@ MULTIPLICA:
            SBC #0
            STA NUM1 + 1
 
+           JC OVERFLOW
+
            JMP MULTIPLICA
 
 
@@ -140,8 +137,28 @@ SOMA:
      ADD NUM2
      STA SOMARESULT
 
+     JC OVERFLOW
+
      HLT
 
+
+OVERFLOW:
+     LDA     @PTR_MSG
+
+     OR      #0
+     JZ      RETORNA
+
+     OUT     2
+
+     LDA     PTR_MSG
+     ADD     #1
+     STA     PTR_MSG
+
+     LDA     PTR_MSG + 1
+     ADC     #0
+     STA     PTR_MSG + 1
+
+     JMP     OVERFLOW
 
 ; Retona para o PC onde a rotina foi chamada
 RETORNA:
@@ -155,8 +172,8 @@ RETORNA:
 ORG 100h
 
 ; Números a serem calculados (intervalo de -128 a 255)
-NUM1: DW -4
-NUM2: DW 3
+NUM1: DW 255
+NUM2: DW -255
 
 ; Decide se o cálculo efetuado será soma (0) ou multiplicação (1)
 DECISOR: DW 0
@@ -184,17 +201,9 @@ SOMARESULT: DS 3
 MULTRESULT: DS 4
 MULTCOUNTER: DS 4
 
-; Ponteiro para armazenar o endereço dos resultados
-PTR_SOMARESULT: DW SOMARESULT
-PTR_MULTRESULT: DW MULTRESULT
-
-
-
-
-
-
-
-
+; Mensagem de overflow e ponteiro correspondente
+MSG: STR "Houve overflow"
+PTR_MSG: DW MSG
 
 
 
