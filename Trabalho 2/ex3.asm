@@ -10,61 +10,29 @@ ORG 0
     ; Limpa o banner
     OUT 3
 
-    LDA I1
-
-    JSR ROTINA
+    JSR MULTIPLICA
 
     HLT
 
 
-ROTINA:
-       ; Repete até que I1 = 3
-       SUB #3
-       JZ RETORNA
-
-       ; Calcula o endereço de VET1[I1]
-       LDA #VET1
-       ADD I1
-       STA PT_VET1
-       LDA @PT_VET1
-
-       ; Calcula o endereço de VET2[I2]
-       LDA #VET2
-       ADD I2
-       STA PT_VET2
-       LDA @PT_VET2
-
-
-TESTES:
-       ; Se der 0, VAR1 é positivo
-       LDA VAR1
-       AND #128
-       JNZ NEGATIVO
-
-       ; Se der 0, VAR2 é positivo
-       LDA VAR2
-       AND #128
-       JNZ NEGATIVO
-
-
-NEGATIVO:
-         ; Se der 0, VAR2 é positivo
-         LDA VAR1
-         AND #128
-         STA VAR1
-
-         ; Se der 0, VAR2 é positivo
-         LDA VAR2
-         AND #128
-         STA VAR2
-
-
 MULTIPLICA:
-           ; Se o multiplicador está zerado, inicia a soma
+           ; Calcula o endereço de VET1[I1]
+           LDA #VET1
+           ADD I1
+           STA PT_VET1
            LDA @PT_VET1
+           OUT 0
+
+           ; Se o multiplicador está zerado, inicia a soma
            OR @PT_VET1 + 1
            OR #0
            JZ SOMA
+
+           ; Calcula o endereço de VET2[I2]
+           LDA #VET2
+           ADD I2
+           STA PT_VET2
+           LDA @PT_VET2
 
            LDA MULTRESULT            ; Pega o byte menos significativo
            ADD @PT_VET2              ; Soma o byte menos significativo com o multiplicando
@@ -95,24 +63,52 @@ MULTIPLICA:
 
 
 SOMA:
-     LDA MULTRESULT
-     ADD PRODINTRESULT
+     LDA PRODINTRESULT
+     ADD MULTRESULT
+     STA PRODINTRESULT
 
      JC OVERFLOW
 
-     ; Endereço do elemento atual de VET1
+     ; Incrementa o índice I1
      LDA I1
      ADD #1
      STA I1
 
-     ; Endereço do elemento atual de VET2
+     ; Incrementa o índice I2
      LDA I2
      ADD #1
      STA I2
 
-     JMP ROTINA
+     ; Repete até que I1 = 3
+     LDA I1
+     SUB #3
+     JNZ MULTIPLICA
 
      HLT
+
+
+TESTES:
+       ; Se der 0, VAR1 é positivo
+       LDA VAR1
+       AND #128
+       JNZ NEGATIVO
+
+       ; Se der 0, VAR2 é positivo
+       LDA VAR2
+       AND #128
+       JNZ NEGATIVO
+
+
+NEGATIVO:
+         ; Se der 0, VAR2 é positivo
+         LDA VAR1
+         AND #128
+         STA VAR1
+
+         ; Se der 0, VAR2 é positivo
+         LDA VAR2
+         AND #128
+         STA VAR2
 
 
 OVERFLOW:
@@ -133,6 +129,7 @@ OVERFLOW:
 
      JMP     OVERFLOW
 
+
 ; Retona para o PC onde a rotina foi chamada
 RETORNA:
         ; Mostra o total do produto interno no visor
@@ -148,16 +145,16 @@ RETORNA:
 ORG 100h
 
 ; Vetores
-VET1: DB 1, 1, 1
-VET2: DB 2, 2, 3
+VET1: DB 1, 2, 3
+VET2: DB 2, 3, 4
 
 ; Variáveis de índice
 I1: DB 0
 I2: DB 0
 
 ; Ponteiros dos vetores
-PT_VET1: DS 1
-PT_VET2: DS 1
+PT_VET1: DB 0
+PT_VET2: DB 0
 
 ; Variáveis da rotina
 VAR1: DW 0
