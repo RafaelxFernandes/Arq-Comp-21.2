@@ -3,6 +3,12 @@
 ; Programa:Escrever um programa para calcular o produto interno de dois vetores
 ; com elementos de 8 bits em complemento a dois. O resultado final deve ser armazenado
 ; em uma variável de 16 bits e impresso no banner, indicando se houve overflow.
+
+; Falta:
+; - iterar corretamente pelo vetor
+; - passar os números para complemento a dois
+; - criar vetor com 20 elementos
+; - substituir SUB #3 em SOMA para SUB #20
 ;
 ;---------------------------------------------------------------------------------------------
 
@@ -17,31 +23,28 @@ ORG 0
 
 MULTIPLICA:
            ; Calcula o endereço de VET1[I1]
-           LDA #VET1
-           ADD I1
-           STA PT_VET1
            LDA @PT_VET1
-           OUT 0
 
            ; Se o multiplicador está zerado, inicia a soma
-           OR @PT_VET1 + 1
            OR #0
            JZ SOMA
 
+           LDA PT_VET1
+           ADD I1
+           STA PT_VET1
+
            ; Calcula o endereço de VET2[I2]
-           LDA #VET2
+           LDA PT_VET2
            ADD I2
            STA PT_VET2
-           LDA @PT_VET2
 
            LDA MULTRESULT            ; Pega o byte menos significativo
            ADD @PT_VET2              ; Soma o byte menos significativo com o multiplicando
            STA MULTRESULT            ; Guarda o resultado
 
-           LDA @PT_VET2 + 1
-
            ; Pega o byte mais significativo
            ; e soma o carry (1 caso a soma anterior dê overflow)
+           LDA @PT_VET2 + 1
            ADC MULTRESULT + 1
            STA MULTRESULT + 1
 
@@ -49,13 +52,6 @@ MULTIPLICA:
            LDA @PT_VET1
            SUB #1
            STA @PT_VET1
-
-           ; Pega o byte mais significativo do multiplicador
-           ; e subtrai o carry (1 caso a soma anterior dê overflow)
-           LDA @PT_VET1 + 1
-
-           SBC #0
-           STA @PT_VET1 + 1
 
            JC OVERFLOW
 
@@ -84,31 +80,31 @@ SOMA:
      SUB #3
      JNZ MULTIPLICA
 
-     HLT
+     JMP RETORNA
 
 
 TESTES:
-       ; Se der 0, VAR1 é positivo
-       LDA VAR1
+       ; Se der 0, VET1[I1] é positivo
+       LDA @PT_VET1
        AND #128
        JNZ NEGATIVO
 
-       ; Se der 0, VAR2 é positivo
-       LDA VAR2
+       ; Se der 0, VET2[I2] é positivo
+       LDA @PT_VET2
        AND #128
        JNZ NEGATIVO
 
 
 NEGATIVO:
-         ; Se der 0, VAR2 é positivo
-         LDA VAR1
+         ; Se der 0, VET1[I1] é positivo
+         LDA @PT_VET1
          AND #128
-         STA VAR1
+         STA @PT_VET1
 
-         ; Se der 0, VAR2 é positivo
-         LDA VAR2
+         ; Se der 0, VET2[I2] é positivo
+         LDA @PT_VET2
          AND #128
-         STA VAR2
+         STA @PT_VET2
 
 
 OVERFLOW:
@@ -146,19 +142,15 @@ ORG 100h
 
 ; Vetores
 VET1: DB 1, 2, 3
-VET2: DB 2, 3, 4
+VET2: DB 4, 5, 6
+
+; Ponteiros dos vetores
+PT_VET1: DW VET1
+PT_VET2: DW VET2
 
 ; Variáveis de índice
 I1: DB 0
 I2: DB 0
-
-; Ponteiros dos vetores
-PT_VET1: DB 0
-PT_VET2: DB 0
-
-; Variáveis da rotina
-VAR1: DW 0
-VAR2: DW 0
 
 ; Variáveis auxiliares para realizar a soma
 SOMARESULT: DS 2
