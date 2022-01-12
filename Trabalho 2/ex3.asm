@@ -62,6 +62,13 @@ SOMA:
      ADD #1
      STA CONT
 
+     ; Exemplo sem overflow
+     ; Repete até que CONT = 3
+     ;LDA CONT
+     ;SUB #3
+     ;JNZ MULTIPLICA
+
+     ; Exemplo com overflow
      ; Repete até que CONT = 20
      LDA CONT
      SUB #20
