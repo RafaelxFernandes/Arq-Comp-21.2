@@ -16,10 +16,9 @@ PTR2:     DW     PALAVRA2
 
 PARAM1:   DW     0
 PARAM2:   DW     0
-RETURN:   DB     0
 
 INICIO:
-          LDA PTR1          ; inicializa pilha com # na base
+          LDA PTR1
           PUSH
           LDA PTR2
           PUSH
