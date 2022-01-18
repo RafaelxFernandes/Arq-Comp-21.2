@@ -4,67 +4,79 @@
 ; Data:  2021
 ;---------------------------------------
 ORG 0
-SP: DW 0
+SP: DW 0                                ; Stack Pointer
 
 
-PTR_STRUCT: DW  PALAVRA1
-PTR_ANTERIOR: DW 0
+PTR_STRUCT: DW  PALAVRA1                ; Ponteiro da estrutura
+PTR_ANTERIOR: DW 0                      ; Ponteiro que aponta para a palavra anterior à palavra apontada por PTR_STRUCT
 
-PALAVRA1: STR "ABCDEFGH"
-          DW  PALAVRA2
+PALAVRA1: STR "ABCDEFGH"                ; Primeira palavra da estrutura
+          DW  PALAVRA2                  ; Endereço da segunda palavra na estrutura
 
-PALAVRA2: STR "BCDEFGHI"
-          DW  PALAVRA3
+PALAVRA2: STR "BCDEFGHI"                ; Segunda palavra da estrutura
+          DW  PALAVRA3                  ; Endereço da terceira palavra na estrutura
 
-PALAVRA3: STR "CDEFGHIJ"
-          DW  PALAVRA4
+PALAVRA3: STR "CDEFGHIJ"                ; Terceira palavra na estrutura
+          DW  PALAVRA4                  ; Endereço da quarta palavra na estrutura
 
-PALAVRA4: STR "DEFGHIJK"
-          DW  0
+PALAVRA4: STR "DEFGHIJK"                ; Quarta palavra na estrutura
+          DW  0                         ; Fim da estrutura
 
-PALAVRA:  STR "Aonald A"
-          DW  0
-PTR:      DW  PALAVRA
+PALAVRA:  STR "DDnald A"                ; Palavra a ser inserida na lista encadeada
+          DW  0                         ; Fim da palavra (ao final será o fim da estrutura ao terá o endereço da palavra seguinte)
 
-TAM_PALAVRA EQU 8
-PARAM1:   DW     0
-PARAM2:   DW     0
+PTR:      DW  PALAVRA                   ; Ponteiro da palavra a ser inserida na estrutura
+
+TAM_PALAVRA EQU 8                       ; Variável que armazena o tamanho das palavras da estrutura 8 caracteres (8 bytes)
+
+PARAM1:   DW     0                      ; Parâmetro 1 da função de comparar cadeias de caracteres
+PARAM2:   DW     0                      ; Parâmetro 2 da função de comparar cadeias de caracteres
 
 
 INICIO:
-          LDA PTR
-          PUSH
-          LDA PTR_STRUCT
-          PUSH
-          JSR COMPARA_CADEIAS
-          JZ  INSERE_PALAVRA
-          LDA PTR_STRUCT
-          STA PTR_ANTERIOR
-          ADD #TAM_PALAVRA
-          STA PTR_STRUCT
-          LDA @PTR_STRUCT
-          STA PTR_STRUCT
-          OR  #0
-          JZ  FIM
-          JMP INICIO
+          LDA PTR                       ; Carregando o ponteiro da palavra a ser inserida no acumulador
+          PUSH                          ; Damos push do ponteiro da palavra na pilha
+          LDA PTR_STRUCT                ; Carregando o ponteiro da estrutura no acumulador
+          PUSH                          ; Damos push do ponteiro da estrutura na pilha
+          JSR COMPARA_CADEIAS           ; Comparamos a palavra da iteração atual na estrutura com a palavra a ser inserida na estrutura
+                                        ; usando a função construída no exercício 4.
+          JZ  INSERE_PALAVRA            ; Caso o retorno de COMPARA_CADEIAS seja zero, temos a palavra a ser inserida fica na frente
+                                        ; da palavra atual na ordenação alfabética, ou seja, desviamos para INSERE_PALAVRA
+          LDA PTR_STRUCT                ; Caso contrário, carregamos o PTR_STRUCT no acumulador
+          STA PTR_ANTERIOR              ; Atualizamo o valor de PTR_ANTERIOR com o valor de PTR_STRUCT para mover para a próxima palavra
+          ADD #TAM_PALAVRA              ; Somamos o tamanho da palavara ao acumulador, dessa forma, agora temos no acumulador o endereço
+                                        ; que armazena o endereço da próxima palavra
+          STA PTR_STRUCT                ; Armazenamos tal endereço em PTR_STRUCT
+          LDA @PTR_STRUCT               ; Carregamos o endereço apontado por PTR_STRUCT no acumulador
+          STA PTR_STRUCT                ; E agora, de fato, PTR_STRUCT aponta para a próxima palavra na estrutura
+          OR  #0                        ; Testa se é o fim da estrutura
+          JZ  FIM                       ; Caso a estrutura tenha chegado ao fim, desvia para FIM
+          JMP INICIO                    ; Caso contrário, vamos para a próxima iteração
+
+INSERE_PALAVRA:                         ; Rotina de inserção da palavara na estrutura
+          LDA PTR_ANTERIOR              ; Carregamos PTR_ANTERIOR
+          ADD #TAM_PALAVRA              ; Adicionamos do tamanho da palavra
+          STA PTR_ANTERIOR              ; E armazenamos em PTR_ANTERIOR, dessa forma, PTR_ANTERIOR, aponta para o apontador
+                                        ; da palavra que foi checada na iteração corrente
+          LDA PTR                       ; Carregamos o ponteiro para a palavra a ser inserida na estrutura no acumulador
+          STA @PTR_ANTERIOR             ; e armazenamos o endereço dela no apontador da palavra anterior na estrutura
+          ADD #TAM_PALAVRA              ; Somamos o valor de tamanho palavra
+          STA PTR                       ; armazenado esse valor no ponteiro e então PTR aponta para o final da palavra a ser adicionada
+          LDA PTR_STRUCT                ; o apontador para a seguinte na palavra na estrutura é carregador no acumulador
+          STA @PTR                      ; e armazenado no endereço do final da palavra a ser adicionada.
           HLT
 
-INSERE_PALAVRA:
-          LDA PTR_ANTERIOR
-          ADD #TAM_PALAVRA
-          STA PTR_ANTERIOR
-          LDA PTR
-          STA @PTR_ANTERIOR
-          LDA PTR
-          ADD #TAM_PALAVRA
-          STA PTR
-          LDA PTR_STRUCT
-          STA @PTR
-
-FIM:      HLT
+FIM:
+          LDA PTR_ANTERIOR              ; Carregamos PTR_ANTERIOR
+          ADD #TAM_PALAVRA              ; Adicionamos do tamanho da palavra
+          STA PTR_ANTERIOR              ; E armazenamos em PTR_ANTERIOR, dessa forma, PTR_ANTERIOR, aponta para o apontador
+                                        ; da palavra que foi checada na iteração corrente
+          LDA PTR                       ; Carregamos o ponteiro para a palavra a ser inserida na estrutura no acumulador
+          STA @PTR_ANTERIOR             ; e armazenamos o endereço dela no apontador da palavra anterior na estrutura
+          HLT
 
 COMPARA_CADEIAS:
-        STS SP
+        STS SP                           ; Carregamento dos parâmetros da função em PARAM1 e PARAM2
         POP
         POP
         POP
